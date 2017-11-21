@@ -8,6 +8,9 @@ echo "task id created is: " $out
 curl localhost:8080/$user/task/$out
 echo "\n"
 
+curl -X PUT localhost:8080/$user/task/$out
+echo "trigger build\n"
+
 out2=`curl -s -X POST -F file=@scripts.sh localhost:8080/$user/task?output=$user-0.0.1.iso`
 echo "task id created is: " $out2
 

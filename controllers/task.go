@@ -10,6 +10,7 @@ import (
 	"github.com/astaxie/beego/logs"
 
 	"github.com/isula/isula-composer-server/models"
+	"github.com/isula/isula-composer-server/session"
 )
 
 // Task defines the task operations
@@ -111,4 +112,35 @@ func (t *Task) Delete() {
 	}
 
 	CtxSuccessWrap(t.Ctx, http.StatusOK, "success to remove task", nil)
+}
+
+// Trigger calls the task
+// TODO: we don't allow to edit a task now
+func (t *Task) Trigger() {
+	user := t.Ctx.Input.Param(":user")
+	idStr := t.Ctx.Input.Param(":id")
+
+	logs.Debug("Trigger task %s from '%s'", idStr, user)
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		CtxErrorWrap(t.Ctx, http.StatusBadRequest, err, fmt.Sprintf("Invalid id detected '%s': %v.", idStr, err))
+		return
+	}
+
+	task, err := models.QueryTaskByID(int64(id))
+	if err != nil {
+		CtxErrorWrap(t.Ctx, http.StatusInternalServerError, err, fmt.Sprintf("Failed to get the task '%d' from '%s'.", id, user))
+		return
+	} else if task == nil {
+		CtxErrorWrap(t.Ctx, http.StatusNotFound, err, fmt.Sprintf("Failed to find the task '%d' from '%s'.", id, user))
+		return
+	}
+
+	err = session.Run(*task)
+	if err != nil {
+		CtxErrorWrap(t.Ctx, http.StatusExpectationFailed, err, fmt.Sprintf("Failed to run the task '%s/%d' from '%v'.", user, id, err))
+		return
+	}
+	CtxSuccessWrap(t.Ctx, http.StatusOK, "ok", nil)
 }
