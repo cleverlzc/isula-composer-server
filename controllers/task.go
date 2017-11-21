@@ -112,6 +112,14 @@ func (t *Task) Delete() {
 		return
 	}
 
+	var task models.Task
+	task.ID = int64(id)
+	err = session.Remove(task)
+	if err != nil {
+		CtxErrorWrap(t.Ctx, http.StatusInternalServerError, err, fmt.Sprintf("Failed to delete the task '%d' from '%s'.", id, user))
+		return
+	}
+
 	CtxSuccessWrap(t.Ctx, http.StatusOK, "success to remove task", nil)
 }
 

@@ -119,3 +119,14 @@ func ReadFile(task models.Task, url string) ([]byte, error) {
 	file := filepath.Join(cacheDir, url)
 	return ioutil.ReadFile(file)
 }
+
+// Remove removes all the task outputs
+func Remove(task models.Task) error {
+	cacheDir, err := GetCacheDir(task)
+	logs.Debug("Remove %s\n", cacheDir)
+	if err != nil {
+		return err
+	}
+
+	return os.RemoveAll(cacheDir)
+}

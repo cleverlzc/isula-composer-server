@@ -151,3 +151,24 @@ func TestReadFile(t *testing.T) {
 	_, err = ReadFile(task, url)
 	assert.Nil(t, err)
 }
+
+func TestRemove(t *testing.T) {
+	tmpDir, _ := ioutil.TempDir("", "isula-composer-server")
+	rootCacheDir = tmpDir
+	defer os.RemoveAll(tmpDir)
+
+	var task models.Task
+	task.ID = 1
+	fi, _ := os.Create(filepath.Join(tmpDir, "1"))
+	fi.Close()
+	err := Remove(task)
+	assert.NotNil(t, err)
+
+	task.ID = 2
+	err = Remove(task)
+	assert.Nil(t, err)
+
+	_, err = os.Stat(filepath.Join(tmpDir, "2"))
+	assert.NotNil(t, err)
+	assert.Equal(t, true, os.IsNotExist(err))
+}
