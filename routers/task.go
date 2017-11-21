@@ -28,6 +28,8 @@ func taskNameSpace() *beego.Namespace {
 		}),
 		beego.NSRouter("/", &controllers.Task{}, "post:Create;get:List"),
 		beego.NSRouter("/:id", &controllers.Task{}, "get:Get;delete:Delete;put:Trigger"),
+		beego.NSRouter("/:id/files", &controllers.Task{}, "get:Files"),
+		beego.NSRouter("/:id/files/*", &controllers.Task{}, "get:Files"),
 	)
 
 	return ns

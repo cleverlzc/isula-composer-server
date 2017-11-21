@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/astaxie/beego"
@@ -143,4 +144,57 @@ func (t *Task) Trigger() {
 		return
 	}
 	CtxSuccessWrap(t.Ctx, http.StatusOK, "ok", nil)
+}
+
+// Files returns the output files
+func (t *Task) Files() {
+	user := t.Ctx.Input.Param(":user")
+	idStr := t.Ctx.Input.Param(":id")
+	url := t.Ctx.Input.Param(":splat")
+
+	logs.Debug("Get task files %s from '%s:%s'", url, user, idStr)
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		CtxErrorWrap(t.Ctx, http.StatusBadRequest, err, fmt.Sprintf("Invalid id detected '%s': %v.", idStr, err))
+		return
+	}
+
+	task, err := models.QueryTaskByID(int64(id))
+	if err != nil {
+		CtxErrorWrap(t.Ctx, http.StatusInternalServerError, err, fmt.Sprintf("Failed to get the task '%d' from '%s'.", id, user))
+		return
+	} else if task == nil {
+		CtxErrorWrap(t.Ctx, http.StatusNotFound, err, fmt.Sprintf("Failed to find the task '%d' from '%s'.", id, user))
+		return
+	}
+
+	fi, err := session.GetFileStat(*task, url)
+	if err != nil {
+		if os.IsNotExist(err) {
+			CtxErrorWrap(t.Ctx, http.StatusNotFound, err, fmt.Sprintf("Failed to find the file '%s' from '%s:%d'.", url, user, id))
+			return
+		}
+		CtxErrorWrap(t.Ctx, http.StatusInternalServerError, err, fmt.Sprintf("Failed to get the file '%s' from '%s:%d'.", url, user, id))
+		return
+	}
+
+	if fi.IsDir() {
+		logs.Debug("%s is a directory", url)
+		files, _ := session.ReadDir(*task, url)
+		t.TplName = "task/files.tpl"
+		t.Data["files"] = files
+		t.Render()
+		return
+	}
+
+	data, err := session.ReadFile(*task, url)
+	if err != nil {
+		CtxErrorWrap(t.Ctx, http.StatusInternalServerError, err, fmt.Sprintf("Failed to get the file content '%s' from '%s:%d'.", url, user, id))
+		return
+	}
+
+	header := make(map[string]string)
+	header["Content-Length"] = fmt.Sprint(len(data))
+	CtxDataWrap(t.Ctx, http.StatusOK, data, header)
 }

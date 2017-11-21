@@ -16,6 +16,8 @@ const (
 	TaskStatusFinish = "finish"
 	// TaskStatusFailed represents a task is failed
 	TaskStatusFailed = "failed"
+	// TaskStatusInnerError represents a task is failed by the server
+	TaskStatusInnerError = "inner error"
 )
 
 // Task defines the task information
@@ -30,7 +32,7 @@ type Task struct {
 	OutputFile string `orm:"column(output_file);size(255);null"`
 	// ConfigFile is the yml file of the building configuration
 	// FIXME: is 4096 big enough? I prefer NOT to save it on a storage.
-	ConfigFile string `orm:"column(config_file);size(4096);null`
+	ConfigFile string `orm:"column(config_file);size(4096);null"`
 	// Scripts is the commands
 	// It should be empty if the builder server is just build iso/image,
 	// we provide default build command in that case.

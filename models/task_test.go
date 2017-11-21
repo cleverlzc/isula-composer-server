@@ -13,17 +13,15 @@ func TestQueryTaskListByUser(t *testing.T) {
 
 	cases := []struct {
 		username string
-		len      int
 		expected bool
 	}{
-		{"isula", 2, true},
-		{"non-exist", 0, true},
+		{"isula", true},
+		{"non-exist", true},
 	}
 
 	for _, c := range cases {
-		tasks, err := QueryTaskListByUser(c.username)
+		_, err := QueryTaskListByUser(c.username)
 		assert.Equal(t, c.expected, err == nil)
-		assert.Equal(t, c.len, len(tasks), "fail to match list length")
 	}
 }
 
